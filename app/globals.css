@@ -79,4 +79,7 @@ body,
   body {
     @apply bg-background text-foreground;
   }
+  .error{
+    color:rgb(253, 6, 6) !important;
+  }
 }
