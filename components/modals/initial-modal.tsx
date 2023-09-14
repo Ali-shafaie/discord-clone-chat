@@ -1,8 +1,12 @@
 "use client";
-import { Button } from "@/components/ui/button";
+
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import axios from "axios";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { UserButton } from "@clerk/nextjs";
 import {
   Dialog,
   DialogContent,
@@ -10,13 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { UserButton } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
+} from "../ui/dialog";
 import {
   Form,
   FormControl,
@@ -24,15 +22,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "../ui/form";
 import { FileUpload } from "../file-upload";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+
+// ... (other imports)
+
 const formSchema = z.object({
   name: z.string().min(3, { message: "Server name is required." }),
   imageUrl: z.string().min(3, { message: "Server image is required." }),
 });
 
 export function InitialModal() {
-  const [isClent, setClient] = useState(false);
+  const [isClient, setClient] = useState(false);
+  const route = useRouter();
 
   useEffect(() => {
     setClient(true);
@@ -42,17 +46,24 @@ export function InitialModal() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      ImageUrl: "",
+      imageUrl: "", // Corrected
     },
   });
 
   const isLoading = form.formState.isSubmitting;
 
-  const onSubmit: any = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: any) => {
     console.log(values);
+    try {
+      await axios.post("/api/server", values);
+      form.reset();
+      // Use route.reload() instead of window.location.reload()
+    } catch (error) {
+      console.error("Error submitting the form:", error);
+    }
   };
 
-  if (!isClent) {
+  if (!isClient) {
     return null;
   }
 
@@ -75,7 +86,7 @@ export function InitialModal() {
                 <div className="flex items-center justify-center text-center">
                   <FormField
                     control={form.control}
-                    name="ImageUrl"
+                    name="imageUrl"
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
@@ -86,20 +97,21 @@ export function InitialModal() {
                           />
                         </FormControl>
                       </FormItem>
-                    )}></FormField>
+                    )}
+                  />
                 </div>
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="uppercase te xt-xs font-bold text-zinc-500 dark:text-secondary/70">
+                      <FormLabel className="uppercase text-xs font-bold text-zinc-500 dark:text-secondary/70">
                         Server name
                       </FormLabel>
                       <FormControl>
                         <Input
                           disabled={isLoading}
-                          className=" bg-zinc-300/50 border-0 focus-visible::ring-0 text-black focus-visible:ring-offset-0"
+                          className="bg-zinc-300/50 border-0 focus-visible::ring-0 text-black focus-visible:ring-offset-0"
                           placeholder="Enter server name"
                           {...field}
                         />
@@ -109,8 +121,8 @@ export function InitialModal() {
                   )}
                 />
               </div>
-              <DialogFooter className="bg-gary-100 px-6 py-4">
-                <Button disabled={isLoading} variant={"primary"}>
+              <DialogFooter className="bg-gray-100 px-6 py-4">
+                <Button type="submit" disabled={isLoading} variant={"primary"}>
                   Create
                 </Button>
               </DialogFooter>
